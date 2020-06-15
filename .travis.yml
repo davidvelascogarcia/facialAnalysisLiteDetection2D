@@ -1,0 +1,77 @@
+# Integración continua Travis CI
+
+# Lenguaje de programación
+
+language: python 3.5
+
+# Sistema operativo destino a probar
+
+os: linux
+
+# Distribución del sistema operativo
+
+dist: xenial
+
+# Requerimiento de permisos en Linux
+
+sudo: enabled
+
+# Compiladores a emplear
+
+compiler: 
+#  - gcc
+   - clang
+
+# Tareas a realizar antes de instalacción
+
+before_install:
+
+# Actualizar
+
+  - sudo apt-get -qq update
+
+# Configurar Git si no lo está
+
+  - if [ ! `git config --get user.email` ]; then `git config --global user.email 'user@example.com'`; fi
+  - if [ ! `git config --get user.name` ]; then `git config --global user.name 'Travis CI'`; fi
+
+# En caso de requerir instalar algo para la prueba
+
+install:
+
+# Instalar YARP
+
+  - sudo sh -c 'echo "deb http://www.icub.org/ubuntu xenial contrib/science" > /etc/apt/sources.list.d/icub.list'
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 57A5ACB6110576A6
+  - sudo apt-get update
+  - sudo apt-get install yarp
+
+# Instalar OpenCV
+
+  - python -m pip install opencv-python==3.4.7.28
+
+# Instalar cvlib
+
+  - python -m pip install cvlib
+
+# Instalar tensorflow
+
+  - python -m pip install tensorflow==1.13.1
+
+
+# Tareas a ejecutar antes de nuestra prueba
+
+before_script:
+  - cd programs
+
+script:
+  - cd ..
+
+# En caso de compilación exitosa
+
+after_success:
+
+# Notificaciones por correo
+
+notifications:
+email: true
