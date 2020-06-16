@@ -227,106 +227,135 @@ while int(loopControlReadImage) == 0:
         # Configure padding
         padding = 20
 
-        # Analyzing detected faces
-        for idx, f in enumerate(detectedFaces):
+        # Pre-configure values with "None"
+        genderDetection = "None"
+        ageDetection = "None"
+        emotionDetection = "None"
 
-            # Get rectangle coordinates init XY coordinates and last XY coordinates
-            (initX,initY) = max(0, f[0] - padding), max(0, f[1] - padding)
-            (lastX,lastY) = min(rgbFrame.shape[1] - 1, f[2] + padding), min(rgbFrame.shape[0]-1, f[3] + padding)
+        if str(detectedFaces) != "[]":
 
-            # Print red rectangle in detected faces
-            cv2.rectangle(in_buf_array, (initX,initY), (lastX,lastY), (255,0,0), 2)
+            # Analyzing detected faces
+            for idx, f in enumerate(detectedFaces):
 
+                # Get rectangle coordinates init XY coordinates and last XY coordinates
+                (initX,initY) = max(0, f[0] - padding), max(0, f[1] - padding)
+                (lastX,lastY) = min(rgbFrame.shape[1] - 1, f[2] + padding), min(rgbFrame.shape[0]-1, f[3] + padding)
 
-            # Gender analysis
-            # Extract detected faces
-            extractedGenderFace = np.copy(rgbFrame[initY:lastY, initX:lastX])
-
-            # Detect gender
-            (genderDetectionResult, genderDetectionConfidence) = cv.detect_gender(extractedGenderFace)
-
-            # Prepare label and confidence value
-            idx = np.argmax(genderDetectionConfidence)
-            genderDetectionLabel = genderDetectionResult[idx]
-            genderDetectionLabel = str(genderDetectionLabel) + " " + str(int(genderDetectionConfidence[idx] * 100)) + "%"
-
-            # Get detected gender value to send
-            genderDetection = genderDetectionLabel
-
-            # Update full detection label
-            detectionFrameLabel = "G: " + str(genderDetection)
-
-            # Age detection
-            # Extract detected faces
-            extractedAgeFace = rgbFrame[initY:lastY, initX:lastX].copy()
-
-            # Configure model MODEL_MEAN_VALUES
-            MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
-
-            # Detect age
-            blobFromImageObject = cv2.dnn.blobFromImage(extractedAgeFace, 1, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
-            ageModel.setInput(blobFromImageObject)
-            ageDetected = ageModel.forward()
-
-            # Get ageDetection compare with ageList
-            ageDetection = ageList[ageDetected[0].argmax()]
-            ageDetection = str(ageDetection)
-
-            # Update full detection label
-            detectionFrameLabel = detectionFrameLabel + " A: " + ageDetection
-
-            # Emotion detection
-            # Extract detected faces from grayFrame
-            extractedEmotionFace = grayFrame[initY:lastY, initX:lastX]
-
-            # Resize grayFrame
-            croppedGrayFrame = np.expand_dims(np.expand_dims(cv2.resize(extractedEmotionFace, (48, 48)), -1), 0)
-
-            # Detect emotion
-            emotionPredictionDetection = emotionModel.predict(croppedGrayFrame)
-
-            # Get emotion detection compare with emotionDictionary
-            emotionPredictionDetectionIndex = int(np.argmax(emotionPredictionDetection))
-            emotionDetection = emotionDictionary[emotionPredictionDetectionIndex]
-
-            # Update full detection label
-            detectionFrameLabel = detectionFrameLabel + " E: " + str(emotionDictionary[emotionPredictionDetectionIndex])
+                # Print red rectangle in detected faces
+                cv2.rectangle(in_buf_array, (initX,initY), (lastX,lastY), (255,0,0), 2)
 
 
-            # Print detection parameters in face detected in red color
-            cv2.putText(in_buf_array, detectionFrameLabel, (initX, initY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2, cv2.LINE_AA)
+                # Gender analysis
+                # Extract detected faces
+                extractedGenderFace = np.copy(rgbFrame[initY:lastY, initX:lastX])
 
+                # Detect gender
+                (genderDetectionResult, genderDetectionConfidence) = cv.detect_gender(extractedGenderFace)
+
+                # Prepare label and confidence value
+                idx = np.argmax(genderDetectionConfidence)
+                genderDetectionLabel = genderDetectionResult[idx]
+                genderDetectionLabel = str(genderDetectionLabel) + " " + str(int(genderDetectionConfidence[idx] * 100)) + "%"
+
+                # Get detected gender value to send
+                genderDetection = genderDetectionLabel
+
+                # Update full detection label
+                detectionFrameLabel = "G: " + str(genderDetection)
+
+                # Age detection
+                # Extract detected faces
+                extractedAgeFace = rgbFrame[initY:lastY, initX:lastX].copy()
+
+                # Configure model MODEL_MEAN_VALUES
+                MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
+
+                # Detect age
+                blobFromImageObject = cv2.dnn.blobFromImage(extractedAgeFace, 1, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
+                ageModel.setInput(blobFromImageObject)
+                ageDetected = ageModel.forward()
+
+                # Get ageDetection compare with ageList
+                ageDetection = ageList[ageDetected[0].argmax()]
+                ageDetection = str(ageDetection)
+
+                # Update full detection label
+                detectionFrameLabel = detectionFrameLabel + " A: " + ageDetection
+
+                # Emotion detection
+                # Extract detected faces from grayFrame
+                extractedEmotionFace = grayFrame[initY:lastY, initX:lastX]
+
+                # Resize grayFrame
+                croppedGrayFrame = np.expand_dims(np.expand_dims(cv2.resize(extractedEmotionFace, (48, 48)), -1), 0)
+
+                # Detect emotion
+                emotionPredictionDetection = emotionModel.predict(croppedGrayFrame)
+
+                # Get emotion detection compare with emotionDictionary
+                emotionPredictionDetectionIndex = int(np.argmax(emotionPredictionDetection))
+                emotionDetection = emotionDictionary[emotionPredictionDetectionIndex]
+
+                # Update full detection label
+                detectionFrameLabel = detectionFrameLabel + " E: " + str(emotionDictionary[emotionPredictionDetectionIndex])
+
+
+                # Print detection parameters in face detected in red color
+                cv2.putText(in_buf_array, detectionFrameLabel, (initX, initY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2, cv2.LINE_AA)
+
+                # Get time Detection
+                timeDetection = datetime.datetime.now()
+
+                # Print processed data
+                print("")
+                print("**************************************************************************")
+                print("Results resume:")
+                print("**************************************************************************")
+                print("")
+                print("[RESULTS] Facial analysis results:")
+                print("Gender: ", genderDetection)
+                print("Age: ", ageDetection )
+                print("Emotion: ", emotionDetection)
+                print("[INFO] Detection time: "+ str(timeDetection))
+
+                # Sending processed detection
+                outputBottleFacialAnalysisLiteDetection2D.clear()
+                outputBottleFacialAnalysisLiteDetection2D.addString("Gender:")
+                outputBottleFacialAnalysisLiteDetection2D.addString(str(genderDetection))
+                outputBottleFacialAnalysisLiteDetection2D.addString("Age:")
+                outputBottleFacialAnalysisLiteDetection2D.addString(str(ageDetection))
+                outputBottleFacialAnalysisLiteDetection2D.addString("Emotion:")
+                outputBottleFacialAnalysisLiteDetection2D.addString(str(emotionDetection))
+                outputBottleFacialAnalysisLiteDetection2D.addString("Time:")
+                outputBottleFacialAnalysisLiteDetection2D.addString(str(timeDetection))
+                facialAnalysisLiteDetection2D_portOutDet.write(outputBottleFacialAnalysisLiteDetection2D)
+
+        # If no faces detected publish "None results"
+        else:
+
+            print("")
+            print("[INFO] No faces detected.")
+            print("")
 
             # Get time Detection
             timeDetection = datetime.datetime.now()
 
-            # Print processed data
-            print("")
-            print("**************************************************************************")
-            print("Results resume:")
-            print("**************************************************************************")
-            print("")
-            print("[RESULTS] Facial analysis results:")
-            print("Gender: ", genderDetection)
-            print("Age: ", ageDetection )
-            print("Emotion: ", emotionDetection)
-            print("[INFO] Detection time: "+ str(timeDetection))
+            # Sending processed detection
+            outputBottleFacialAnalysisLiteDetection2D.clear()
+            outputBottleFacialAnalysisLiteDetection2D.addString("Gender:")
+            outputBottleFacialAnalysisLiteDetection2D.addString(str(genderDetection))
+            outputBottleFacialAnalysisLiteDetection2D.addString("Age:")
+            outputBottleFacialAnalysisLiteDetection2D.addString(str(ageDetection))
+            outputBottleFacialAnalysisLiteDetection2D.addString("Emotion:")
+            outputBottleFacialAnalysisLiteDetection2D.addString(str(emotionDetection))
+            outputBottleFacialAnalysisLiteDetection2D.addString("Time:")
+            outputBottleFacialAnalysisLiteDetection2D.addString(str(timeDetection))
+            facialAnalysisLiteDetection2D_portOutDet.write(outputBottleFacialAnalysisLiteDetection2D)
+
 
         print("")
         print("[INFO] Image source analysis done correctly.")
         print("")
-
-        # Sending processed detection
-        outputBottleFacialAnalysisLiteDetection2D.clear()
-        outputBottleFacialAnalysisLiteDetection2D.addString("Gender:")
-        outputBottleFacialAnalysisLiteDetection2D.addString(str(genderDetection))
-        outputBottleFacialAnalysisLiteDetection2D.addString("Age:")
-        outputBottleFacialAnalysisLiteDetection2D.addString(str(ageDetection))
-        outputBottleFacialAnalysisLiteDetection2D.addString("Emotion:")
-        outputBottleFacialAnalysisLiteDetection2D.addString(str(emotionDetection))
-        outputBottleFacialAnalysisLiteDetection2D.addString("Time:")
-        outputBottleFacialAnalysisLiteDetection2D.addString(str(timeDetection))
-        facialAnalysisLiteDetection2D_portOutDet.write(outputBottleFacialAnalysisLiteDetection2D)
 
         # Sending processed image
         print("")
