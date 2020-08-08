@@ -35,6 +35,7 @@ import time
 import yarp
 
 print("")
+print("")
 print("**************************************************************************")
 print("**************************************************************************")
 print("               Program: Facial Analysis Lite Detection 2D                 ")
@@ -348,7 +349,6 @@ while int(loopControlReadImage) == 0:
             outputBottleFacialAnalysisLiteDetection2D.addString("DATE:")
             outputBottleFacialAnalysisLiteDetection2D.addString(str(datetime.datetime.now()))
             facialAnalysisLiteDetection2D_portOutDet.write(outputBottleFacialAnalysisLiteDetection2D)
-
 
         print("")
         print("[INFO] Image source analysis done correctly.")
