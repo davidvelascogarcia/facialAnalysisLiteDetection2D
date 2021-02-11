@@ -24,7 +24,7 @@ install:
   - sudo apt-get install yarp
 
 # Install dependencies
-  - python -m pip -r install requirements.txt
+  - pip -r install requirements.txt
 
 before_script:
   - cd programs
