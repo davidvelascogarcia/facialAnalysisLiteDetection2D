@@ -13,6 +13,8 @@
 
 `facialAnalysisLiteDetection2D` module use `tensorflow` , `cvlib` and `openCV` `python` API. The module analyze faces using pre-trained models and adds facial analysis doing prediction about some features like gender, age and emotions. Also use `YARP` to send video source pre and post-procesed. Also admits `YARP` source video like input. This module also publish detection results in `YARP` port.
 
+Documentation available on [docs](https://davidvelascogarcia.github.io/facialAnalysisLiteDetection2D)
+
 
 ## Trained Models
 
