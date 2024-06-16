@@ -45,24 +45,26 @@ print("*************************************************************************
 
 print("")
 print("Starting system ...")
+print("")
 
 print("")
 print("Loading facialAnalysisLiteDetection2D module ...")
-
 print("")
+
 print("")
 print("**************************************************************************")
 print("YARP configuration:")
 print("**************************************************************************")
 print("")
-print("")
 print("Initializing YARP network ...")
+print("")
 
 # Init YARP Network
 yarp.Network.init()
 
 print("")
 print("[INFO] Opening image input port with name /facialAnalysisLiteDetection2D/img:i ...")
+print("")
 
 # Open input image port
 facialAnalysisLiteDetection2D_portIn = yarp.BufferedPortImageRgb()
@@ -71,6 +73,7 @@ facialAnalysisLiteDetection2D_portIn.open(facialAnalysisLiteDetection2D_portName
 
 print("")
 print("[INFO] Opening image output port with name /facialAnalysisLiteDetection2D/img:o ...")
+print("")
 
 # Open output image port
 facialAnalysisLiteDetection2D_portOut = yarp.Port()
@@ -79,6 +82,7 @@ facialAnalysisLiteDetection2D_portOut.open(facialAnalysisLiteDetection2D_portNam
 
 print("")
 print("[INFO] Opening data output port with name /facialAnalysisLiteDetection2D/data:o ...")
+print("")
 
 # Open output data port
 facialAnalysisLiteDetection2D_portOutDet = yarp.Port()
@@ -105,20 +109,21 @@ out_buf_array = np.zeros((image_h, image_w, 3), np.uint8)
 out_buf_image.setExternal(out_buf_array.data, out_buf_array.shape[1], out_buf_array.shape[0])
 
 print("")
+print("[INFO] YARP network configured correctly.")
+print("")
+
 print("")
 print("**************************************************************************")
 print("Loading models:")
 print("**************************************************************************")
 print("")
-print("")
-print("Loading models ...")
+print("[INFO] Loading models at " + str(datetime.datetime.now()) + " ...")
 print("")
 
 # Load models
-
 # Age Models
 print("")
-print("Loading age models ...")
+print("[INFO] Loading age models at " + str(datetime.datetime.now()) + " ...")
 print("")
 
 ageModel = cv2.dnn.readNetFromCaffe('./../models/ageDeployModel.prototxt','./../models/ageNetModel.caffemodel')
@@ -136,7 +141,7 @@ print("")
 
 # Emotion Models
 print("")
-print("Loading emotion models ...")
+print("[INFO] Loading emotion models at " + str(datetime.datetime.now()) + " ...")
 print("")
 
 # Initializing emotionModel
@@ -173,17 +178,6 @@ print("")
 print("[INFO] Models loaded correctly.")
 print("")
 
-
-print("")
-print("")
-print("**************************************************************************")
-print("Waiting for input image source:")
-print("**************************************************************************")
-print("")
-print("")
-print("Waiting input image source ...")
-print("")
-
 # Control loop
 loopControlReadImage = 0
 
@@ -191,16 +185,24 @@ while int(loopControlReadImage) == 0:
 
     try:
 
+        print("")
+        print("**************************************************************************")
+        print("Waiting for input image source:")
+        print("**************************************************************************")
+        print("")
+        print("[INFO] Waiting input image source at " + str(datetime.datetime.now()) + " ...")
+        print("")
+
         # Receive image source
         frame = facialAnalysisLiteDetection2D_portIn.read()
 
         print("")
-        print("")
         print("**************************************************************************")
-        print("Processing:")
+        print("Processing input image data:")
         print("**************************************************************************")
         print("")
-        print("Processing data ...")
+        print("[INFO] Processing input image data at " + str(datetime.datetime.now()) + " ...")
+        print("")
 
         # Buffer processed image
         in_buf_image.copy(frame)
@@ -213,12 +215,11 @@ while int(loopControlReadImage) == 0:
         grayFrame = cv2.cvtColor(rgbFrame, cv2.COLOR_BGR2GRAY)
 
         print("")
-        print("")
         print("**************************************************************************")
         print("Analyzing image source:")
         print("**************************************************************************")
         print("")
-        print("Analyzing image source ...")
+        print("[INFO] Analyzing image source at " + str(datetime.datetime.now()) + " ...")
         print("")
 
         # cvlib detect and extract faces
@@ -303,31 +304,30 @@ while int(loopControlReadImage) == 0:
                 # Print detection parameters in face detected in red color
                 cv2.putText(in_buf_array, detectionFrameLabel, (initX, initY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2, cv2.LINE_AA)
 
-                # Get time Detection
-                timeDetection = datetime.datetime.now()
-
                 # Print processed data
                 print("")
                 print("**************************************************************************")
-                print("Results resume:")
+                print("Resume results:")
                 print("**************************************************************************")
                 print("")
                 print("[RESULTS] Facial analysis results:")
-                print("Gender: ", genderDetection)
-                print("Age: ", ageDetection )
-                print("Emotion: ", emotionDetection)
-                print("[INFO] Detection time: "+ str(timeDetection))
+                print("")
+                print("[GENDER] Gender: " + str(genderDetection))
+                print("[AGE] Age: " + str(ageDetection))
+                print("[EMOTION] Emotion: "  + str(emotionDetection))
+                print("[DATE] Detection time: " + str(datetime.datetime.now()))
+                print("")
 
                 # Sending processed detection
                 outputBottleFacialAnalysisLiteDetection2D.clear()
-                outputBottleFacialAnalysisLiteDetection2D.addString("Gender:")
+                outputBottleFacialAnalysisLiteDetection2D.addString("GENDER:")
                 outputBottleFacialAnalysisLiteDetection2D.addString(str(genderDetection))
-                outputBottleFacialAnalysisLiteDetection2D.addString("Age:")
+                outputBottleFacialAnalysisLiteDetection2D.addString("AGE:")
                 outputBottleFacialAnalysisLiteDetection2D.addString(str(ageDetection))
-                outputBottleFacialAnalysisLiteDetection2D.addString("Emotion:")
+                outputBottleFacialAnalysisLiteDetection2D.addString("EMOTION:")
                 outputBottleFacialAnalysisLiteDetection2D.addString(str(emotionDetection))
-                outputBottleFacialAnalysisLiteDetection2D.addString("Time:")
-                outputBottleFacialAnalysisLiteDetection2D.addString(str(timeDetection))
+                outputBottleFacialAnalysisLiteDetection2D.addString("DATE:")
+                outputBottleFacialAnalysisLiteDetection2D.addString(str(datetime.datetime.now()))
                 facialAnalysisLiteDetection2D_portOutDet.write(outputBottleFacialAnalysisLiteDetection2D)
 
         # If no faces detected publish "None results"
@@ -337,19 +337,16 @@ while int(loopControlReadImage) == 0:
             print("[INFO] No faces detected.")
             print("")
 
-            # Get time Detection
-            timeDetection = datetime.datetime.now()
-
             # Sending processed detection
             outputBottleFacialAnalysisLiteDetection2D.clear()
-            outputBottleFacialAnalysisLiteDetection2D.addString("Gender:")
+            outputBottleFacialAnalysisLiteDetection2D.addString("GENDER:")
             outputBottleFacialAnalysisLiteDetection2D.addString(str(genderDetection))
-            outputBottleFacialAnalysisLiteDetection2D.addString("Age:")
+            outputBottleFacialAnalysisLiteDetection2D.addString("AGE:")
             outputBottleFacialAnalysisLiteDetection2D.addString(str(ageDetection))
-            outputBottleFacialAnalysisLiteDetection2D.addString("Emotion:")
+            outputBottleFacialAnalysisLiteDetection2D.addString("EMOTION:")
             outputBottleFacialAnalysisLiteDetection2D.addString(str(emotionDetection))
-            outputBottleFacialAnalysisLiteDetection2D.addString("Time:")
-            outputBottleFacialAnalysisLiteDetection2D.addString(str(timeDetection))
+            outputBottleFacialAnalysisLiteDetection2D.addString("DATE:")
+            outputBottleFacialAnalysisLiteDetection2D.addString(str(datetime.datetime.now()))
             facialAnalysisLiteDetection2D_portOutDet.write(outputBottleFacialAnalysisLiteDetection2D)
 
 
@@ -359,8 +356,9 @@ while int(loopControlReadImage) == 0:
 
         # Sending processed image
         print("")
-        print("[INFO] Sending processed image ...")
+        print("[INFO] Sending processed image at " + str(datetime.datetime.now()) + " ...")
         print("")
+
         out_buf_array[:,:] = in_buf_array
         facialAnalysisLiteDetection2D_portOut.write(out_buf_image)
 
