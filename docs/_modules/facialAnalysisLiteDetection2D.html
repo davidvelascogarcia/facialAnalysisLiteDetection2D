@@ -1,0 +1,701 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>facialAnalysisLiteDetection2D &mdash; Facial Analysis Lite Detection 2D v1.0.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Facial Analysis Lite Detection 2D
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v1.0.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../docs/facialAnalysisLiteDetection2D.html">facialAnalysisLiteDetection2D module</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Facial Analysis Lite Detection 2D</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>facialAnalysisLiteDetection2D</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for facialAnalysisLiteDetection2D</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">  * ************************************************************</span>
+<span class="sd">  *      Program: Facial Analysis Lite Detection 2D</span>
+<span class="sd">  *      Type: Python</span>
+<span class="sd">  *      Author: David Velasco Garcia @davidvelascogarcia</span>
+<span class="sd">  * ************************************************************</span>
+<span class="sd">  *</span>
+<span class="sd">  * | INPUT PORT                           | CONTENT                                                 |</span>
+<span class="sd">  * |--------------------------------------|---------------------------------------------------------|</span>
+<span class="sd">  * | /facialAnalysisLiteDetection2D/img:i | Input image                                             |</span>
+<span class="sd">  *</span>
+<span class="sd">  *</span>
+<span class="sd">  * | OUTPUT PORT                          | CONTENT                                                 |</span>
+<span class="sd">  * |--------------------------------------|---------------------------------------------------------|</span>
+<span class="sd">  * | /facialAnalysisLiteDetection2D/img:o | Output image with facial analysis                       |</span>
+<span class="sd">  * | /facialAnalysisLiteDetection2D/data:o| Output result, facial analysis data                     |</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="c1"># Libraries</span>
+<span class="kn">import</span> <span class="nn">configparser</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">cvlib</span> <span class="k">as</span> <span class="nn">cv</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">halo</span> <span class="kn">import</span> <span class="n">Halo</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">platform</span>
+<span class="kn">import</span> <span class="nn">queue</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.models</span> <span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Dropout</span><span class="p">,</span> <span class="n">Flatten</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">MaxPooling2D</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">yarp</span>
+
+
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D">[docs]</a><span class="k">class</span> <span class="nc">FacialAnalysisLiteDetection2D</span><span class="p">:</span>
+
+    <span class="c1"># Function: Constructor</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Build Halo spinner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span> <span class="o">=</span> <span class="n">Halo</span><span class="p">(</span><span class="n">spinner</span><span class="o">=</span><span class="s1">&#39;dots&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Function: getSystemPlatform</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.getSystemPlatform"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.getSystemPlatform">[docs]</a>    <span class="k">def</span> <span class="nf">getSystemPlatform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="c1"># Get system configuration</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Detecting system and release version ...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">systemPlatform</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
+        <span class="n">systemRelease</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Configuration detected:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Platform:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">systemPlatform</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Release:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">systemRelease</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">systemPlatform</span><span class="p">,</span> <span class="n">systemRelease</span></div>
+
+    <span class="c1"># Function: getAuthenticationData</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.getAuthenticationData"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.getAuthenticationData">[docs]</a>    <span class="k">def</span> <span class="nf">getAuthenticationData</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">**************************************************************************&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Authentication:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">loopControlFileExists</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">while</span> <span class="nb">int</span><span class="p">(</span><span class="n">loopControlFileExists</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Get authentication data</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Getting authentication data ...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="n">authenticationData</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+                <span class="n">authenticationData</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;../config/config.ini&#39;</span><span class="p">)</span>
+                <span class="n">authenticationData</span><span class="o">.</span><span class="n">sections</span><span class="p">()</span>
+
+                <span class="n">imageWidth</span> <span class="o">=</span> <span class="n">authenticationData</span><span class="p">[</span><span class="s1">&#39;Configuration&#39;</span><span class="p">][</span><span class="s1">&#39;image-width&#39;</span><span class="p">]</span>
+                <span class="n">imageHeight</span> <span class="o">=</span> <span class="n">authenticationData</span><span class="p">[</span><span class="s1">&#39;Configuration&#39;</span><span class="p">][</span><span class="s1">&#39;image-height&#39;</span><span class="p">]</span>
+
+                <span class="n">ageModel</span> <span class="o">=</span> <span class="s2">&quot;./../models/&quot;</span> <span class="o">+</span> <span class="n">authenticationData</span><span class="p">[</span><span class="s1">&#39;Models&#39;</span><span class="p">][</span><span class="s1">&#39;age-model&#39;</span><span class="p">]</span>
+                <span class="n">ageLabels</span> <span class="o">=</span> <span class="s2">&quot;./../models/&quot;</span> <span class="o">+</span> <span class="n">authenticationData</span><span class="p">[</span><span class="s1">&#39;Models&#39;</span><span class="p">][</span><span class="s1">&#39;age-labels&#39;</span><span class="p">]</span>
+                <span class="n">emotionModel</span> <span class="o">=</span> <span class="s2">&quot;./../models/&quot;</span> <span class="o">+</span> <span class="n">authenticationData</span><span class="p">[</span><span class="s1">&#39;Models&#39;</span><span class="p">][</span><span class="s1">&#39;emotion-model&#39;</span><span class="p">]</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Image width: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">imageWidth</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Image height: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">imageHeight</span><span class="p">))</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Age model: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ageModel</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Age labels: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ageLabels</span><span class="p">))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Emotion model: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">emotionModel</span><span class="p">))</span>
+
+                <span class="c1"># Exit loop</span>
+                <span class="n">loopControlFileExists</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">except</span><span class="p">:</span>
+
+                <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[ERROR] Sorry, config.ini not founded, waiting 4 seconds to the next check ...</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Data obtained correctly.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;green&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">succeed</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">,</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageLabels</span><span class="p">,</span> <span class="n">emotionModel</span></div>
+
+    <span class="c1"># Function: loadAgeModel</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.loadAgeModel"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.loadAgeModel">[docs]</a>    <span class="k">def</span> <span class="nf">loadAgeModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageLabels</span><span class="p">):</span>
+
+        <span class="c1"># Load trained age model with their labels</span>
+        <span class="n">ageModel</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">dnn</span><span class="o">.</span><span class="n">readNetFromCaffe</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ageLabels</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">ageModel</span><span class="p">))</span>
+
+        <span class="c1"># Prepare age list dictionary</span>
+        <span class="n">ageList</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;(0, 2)&#39;</span><span class="p">,</span> <span class="s1">&#39;(4, 6)&#39;</span><span class="p">,</span> <span class="s1">&#39;(8, 12)&#39;</span><span class="p">,</span> <span class="s1">&#39;(15, 20)&#39;</span><span class="p">,</span> <span class="s1">&#39;(25, 32)&#39;</span><span class="p">,</span> <span class="s1">&#39;(38, 43)&#39;</span><span class="p">,</span> <span class="s1">&#39;(48, 53)&#39;</span><span class="p">,</span> <span class="s1">&#39;(60, 100)&#39;</span><span class="p">]</span>
+
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Age model loaded correctly correctly.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;green&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">succeed</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageList</span></div>
+
+    <span class="c1"># Function: loadEmotionModel</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.loadEmotionModel"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.loadEmotionModel">[docs]</a>    <span class="k">def</span> <span class="nf">loadEmotionModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">emotionModelPath</span><span class="p">):</span>
+
+        <span class="c1"># Build neural network</span>
+        <span class="n">emotionModel</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+
+        <span class="c1"># Configure neural network</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">48</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.25</span><span class="p">))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">MaxPooling2D</span><span class="p">(</span><span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.25</span><span class="p">))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Flatten</span><span class="p">())</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softmax&#39;</span><span class="p">))</span>
+
+        <span class="c1"># Load trained network and set the trained weights in configured neural network</span>
+        <span class="n">emotionModel</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">emotionModelPath</span><span class="p">))</span>
+
+        <span class="c1"># Prepare emotion list dictionary</span>
+        <span class="n">emotionList</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;Angry&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;Disgusted&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;Fearful&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;Happy&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="s2">&quot;Neutral&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="s2">&quot;Sad&quot;</span><span class="p">,</span> <span class="mi">6</span><span class="p">:</span> <span class="s2">&quot;Surprised&quot;</span><span class="p">}</span>
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Emotion model loaded correctly correctly.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;green&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">succeed</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">emotionModel</span><span class="p">,</span> <span class="n">emotionList</span></div>
+
+    <span class="c1"># Function: genderAnalysis</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.genderAnalysis"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.genderAnalysis">[docs]</a>    <span class="k">def</span> <span class="nf">genderAnalysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userFace</span><span class="p">,</span> <span class="n">xMin</span><span class="p">,</span> <span class="n">yMin</span><span class="p">,</span> <span class="n">xMax</span><span class="p">,</span> <span class="n">yMax</span><span class="p">,</span> <span class="n">genderQueueBuffer</span><span class="p">):</span>
+
+        <span class="c1"># Analyze user gender</span>
+        <span class="p">(</span><span class="n">userGender</span><span class="p">,</span> <span class="n">genderConfidence</span><span class="p">)</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">detect_gender</span><span class="p">(</span><span class="n">userFace</span><span class="p">)</span>
+
+        <span class="c1"># Get index confidence</span>
+        <span class="n">genderConfidenceIndex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">genderConfidence</span><span class="p">)</span>
+
+        <span class="c1"># Get prediction based on confidence of gender</span>
+        <span class="n">dataSolved</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">userGender</span><span class="p">[</span><span class="n">genderConfidenceIndex</span><span class="p">])</span>
+
+        <span class="c1"># Prepare data solved with prediction and de confidence</span>
+        <span class="n">dataSolved</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">dataSolved</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">genderConfidence</span><span class="p">[</span><span class="n">genderConfidenceIndex</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;%&quot;</span>
+
+        <span class="n">genderQueueBuffer</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">dataSolved</span><span class="p">)</span></div>
+
+    <span class="c1"># Function: ageAnalysis</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.ageAnalysis"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.ageAnalysis">[docs]</a>    <span class="k">def</span> <span class="nf">ageAnalysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userFace</span><span class="p">,</span> <span class="n">xMin</span><span class="p">,</span> <span class="n">yMin</span><span class="p">,</span> <span class="n">xMax</span><span class="p">,</span> <span class="n">yMax</span><span class="p">,</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageList</span><span class="p">,</span> <span class="n">ageQueueBuffer</span><span class="p">):</span>
+
+        <span class="c1"># Configure model values</span>
+        <span class="n">MODEL_MEAN_VALUES</span> <span class="o">=</span> <span class="p">(</span><span class="mf">78.4263377603</span><span class="p">,</span> <span class="mf">87.7689143744</span><span class="p">,</span> <span class="mf">114.895847746</span><span class="p">)</span>
+
+        <span class="c1"># Extract blob from image</span>
+        <span class="n">blobImage</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">dnn</span><span class="o">.</span><span class="n">blobFromImage</span><span class="p">(</span><span class="n">userFace</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">227</span><span class="p">,</span> <span class="mi">227</span><span class="p">),</span> <span class="n">MODEL_MEAN_VALUES</span><span class="p">,</span> <span class="n">swapRB</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># Analyze user age</span>
+        <span class="n">ageModel</span><span class="o">.</span><span class="n">setInput</span><span class="p">(</span><span class="n">blobImage</span><span class="p">)</span>
+
+        <span class="c1"># Get user age</span>
+        <span class="n">userAge</span> <span class="o">=</span> <span class="n">ageModel</span><span class="o">.</span><span class="n">forward</span><span class="p">()</span>
+
+        <span class="c1"># Get ageDetection compare with ageList and index</span>
+        <span class="n">userAge</span> <span class="o">=</span> <span class="n">ageList</span><span class="p">[</span><span class="n">userAge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">argmax</span><span class="p">()]</span>
+
+        <span class="c1"># Prepare data solved with prediction</span>
+        <span class="n">dataSolved</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">userAge</span><span class="p">)</span>
+
+        <span class="n">ageQueueBuffer</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">dataSolved</span><span class="p">)</span></div>
+
+    <span class="c1"># Function: emotionAnalysis</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.emotionAnalysis"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.emotionAnalysis">[docs]</a>    <span class="k">def</span> <span class="nf">emotionAnalysis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userFace</span><span class="p">,</span> <span class="n">xMin</span><span class="p">,</span> <span class="n">yMin</span><span class="p">,</span> <span class="n">xMax</span><span class="p">,</span> <span class="n">yMax</span><span class="p">,</span> <span class="n">emotionModel</span><span class="p">,</span> <span class="n">emotionList</span><span class="p">,</span> <span class="n">emotionQueueBuffer</span><span class="p">):</span>
+
+        <span class="c1"># BGR to grey scale conversion</span>
+        <span class="n">userFace</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">userFace</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+
+        <span class="c1"># Resize user face to emotion model size</span>
+        <span class="n">userFace</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">userFace</span><span class="p">,</span> <span class="p">(</span><span class="mi">48</span><span class="p">,</span> <span class="mi">48</span><span class="p">)),</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Analyze user emotion</span>
+        <span class="n">userEmotion</span> <span class="o">=</span> <span class="n">emotionModel</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">userFace</span><span class="p">)</span>
+
+        <span class="c1"># Get emotion detection compare with emotionDictionary</span>
+        <span class="n">userEmotion</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">userEmotion</span><span class="p">))</span>
+        <span class="n">userEmotion</span> <span class="o">=</span> <span class="n">emotionList</span><span class="p">[</span><span class="n">userEmotion</span><span class="p">]</span>
+
+        <span class="c1"># Prepare data solved with prediction</span>
+        <span class="n">dataSolved</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">userEmotion</span><span class="p">)</span>
+
+        <span class="n">emotionQueueBuffer</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">dataSolved</span><span class="p">)</span></div>
+
+    <span class="c1"># Function: analyzeImage</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.analyzeImage"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.analyzeImage">[docs]</a>    <span class="k">def</span> <span class="nf">analyzeImage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataToSolve</span><span class="p">,</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageList</span><span class="p">,</span> <span class="n">emotionModel</span><span class="p">,</span> <span class="n">emotionList</span><span class="p">,</span> <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">,</span> <span class="n">inputImagePort</span><span class="p">,</span> <span class="n">outputImagePort</span><span class="p">,</span> <span class="n">outputDataPort</span><span class="p">):</span>
+
+        <span class="c1"># Detect users in data to solve</span>
+        <span class="n">detectedUsers</span><span class="p">,</span> <span class="n">detectionConfidence</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">detect_face</span><span class="p">(</span><span class="n">dataToSolve</span><span class="p">)</span>
+
+        <span class="c1"># Prepare default padding value</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="mi">20</span>
+
+        <span class="c1"># If a face is detected</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">detectedUsers</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;[]&quot;</span><span class="p">:</span>
+
+            <span class="c1"># For each detected user</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">detectedUsers</span><span class="p">):</span>
+
+                <span class="c1"># Get user rectangle coordinates</span>
+                <span class="p">(</span><span class="n">xMin</span><span class="p">,</span><span class="n">yMin</span><span class="p">)</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">padding</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">f</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">padding</span><span class="p">)</span>
+                <span class="p">(</span><span class="n">xMax</span><span class="p">,</span><span class="n">yMax</span><span class="p">)</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">dataToSolve</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">padding</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">dataToSolve</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">padding</span><span class="p">)</span>
+
+                <span class="c1"># Draw red rectangle in user detected</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">rectangle</span><span class="p">(</span><span class="n">dataToSolve</span><span class="p">,</span> <span class="p">(</span><span class="n">xMin</span><span class="p">,</span> <span class="n">yMin</span><span class="p">),</span> <span class="p">(</span><span class="n">xMax</span><span class="p">,</span> <span class="n">yMax</span><span class="p">),</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+
+                <span class="c1"># Extract only user detected face</span>
+                <span class="n">userFace</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">dataToSolve</span><span class="p">[</span><span class="n">yMin</span><span class="p">:</span><span class="n">yMax</span><span class="p">,</span> <span class="n">xMin</span><span class="p">:</span><span class="n">xMax</span><span class="p">])</span>
+
+                <span class="c1"># Build Queue buffers</span>
+                <span class="n">genderQueueBuffer</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+                <span class="n">ageQueueBuffer</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+                <span class="n">emotionQueueBuffer</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+
+                <span class="c1"># Build three threads to improve analysis speed</span>
+                <span class="n">genderAnalysisThread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">genderAnalysis</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">userFace</span><span class="p">,</span> <span class="n">xMin</span><span class="p">,</span> <span class="n">yMin</span><span class="p">,</span> <span class="n">xMax</span><span class="p">,</span> <span class="n">yMax</span><span class="p">,</span> <span class="n">genderQueueBuffer</span><span class="p">))</span>
+                <span class="n">ageAnalysisThread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ageAnalysis</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">userFace</span><span class="p">,</span> <span class="n">xMin</span><span class="p">,</span> <span class="n">yMin</span><span class="p">,</span> <span class="n">xMax</span><span class="p">,</span> <span class="n">yMax</span><span class="p">,</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageList</span><span class="p">,</span> <span class="n">ageQueueBuffer</span><span class="p">))</span>
+                <span class="n">emotionAnalysisThread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emotionAnalysis</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">userFace</span><span class="p">,</span> <span class="n">xMin</span><span class="p">,</span> <span class="n">yMin</span><span class="p">,</span> <span class="n">xMax</span><span class="p">,</span> <span class="n">yMax</span><span class="p">,</span> <span class="n">emotionModel</span><span class="p">,</span> <span class="n">emotionList</span><span class="p">,</span> <span class="n">emotionQueueBuffer</span><span class="p">))</span>
+
+                <span class="c1"># Start three threads</span>
+                <span class="n">genderAnalysisThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="n">ageAnalysisThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="n">emotionAnalysisThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+                <span class="c1"># Wait until three threads ends</span>
+                <span class="n">genderAnalysisThread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+                <span class="n">ageAnalysisThread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+                <span class="n">emotionAnalysisThread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+                <span class="c1"># Get threads results</span>
+                <span class="n">userGender</span> <span class="o">=</span> <span class="n">genderQueueBuffer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+                <span class="n">userAge</span> <span class="o">=</span> <span class="n">ageQueueBuffer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+                <span class="n">userEmotion</span> <span class="o">=</span> <span class="n">emotionQueueBuffer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+
+                <span class="c1"># Prepare data solved results</span>
+                <span class="n">dataSolvedResults</span> <span class="o">=</span> <span class="s2">&quot;Gender: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">userGender</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, Age: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">userAge</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, Emotion: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">userEmotion</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, Date: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+                <span class="n">dataSolvedResultsLabel</span> <span class="o">=</span> <span class="s2">&quot;G: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">userGender</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, A: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">userAge</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, E: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">userEmotion</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, D: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+
+                <span class="c1"># Draw data solved results on user detected</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">putText</span><span class="p">(</span><span class="n">dataToSolve</span><span class="p">,</span> <span class="n">dataSolvedResultsLabel</span><span class="p">,</span> <span class="p">(</span><span class="n">xMin</span><span class="p">,</span> <span class="n">yMin</span> <span class="o">-</span> <span class="mi">20</span><span class="p">),</span> <span class="n">cv2</span><span class="o">.</span><span class="n">FONT_HERSHEY_SIMPLEX</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">LINE_AA</span><span class="p">)</span>
+
+                <span class="c1"># Send detected results</span>
+                <span class="n">outputDataPort</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">dataSolvedResults</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] No faces detected.</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;blue&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+            <span class="c1"># Prepare output results</span>
+            <span class="n">dataSolvedResults</span> <span class="o">=</span> <span class="s2">&quot;Gender: None, Age: None, Emotion: None, Date: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+
+            <span class="c1"># Send detected results</span>
+            <span class="n">outputDataPort</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">dataSolvedResults</span><span class="p">)</span>
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dataSolvedResults</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;green&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">succeed</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="n">dataSolvedImage</span> <span class="o">=</span> <span class="n">dataToSolve</span>
+
+        <span class="k">return</span> <span class="n">dataSolvedImage</span></div>
+
+    <span class="c1"># Function: processRequest</span>
+<div class="viewcode-block" id="FacialAnalysisLiteDetection2D.processRequests"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.FacialAnalysisLiteDetection2D.processRequests">[docs]</a>    <span class="k">def</span> <span class="nf">processRequests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageList</span><span class="p">,</span> <span class="n">emotionModel</span><span class="p">,</span> <span class="n">emotionList</span><span class="p">,</span> <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">,</span> <span class="n">inputImagePort</span><span class="p">,</span> <span class="n">outputImagePort</span><span class="p">,</span> <span class="n">outputDataPort</span><span class="p">):</span>
+
+        <span class="c1"># Variable to control loopProcessRequests</span>
+        <span class="n">loopProcessRequests</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">while</span> <span class="nb">int</span><span class="p">(</span><span class="n">loopProcessRequests</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="c1"># Waiting to input data request</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Waiting for input data request:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+
+            <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Waiting for input data request at &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span> <span class="o">+</span> <span class="s2">&quot; ...</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;yellow&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+            <span class="c1"># Receive input request</span>
+            <span class="n">dataToSolve</span> <span class="o">=</span> <span class="n">inputImagePort</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">**************************************************************************&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Processing:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">dataSolvedImage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyzeImage</span><span class="p">(</span><span class="n">dataToSolve</span><span class="p">,</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageList</span><span class="p">,</span> <span class="n">emotionModel</span><span class="p">,</span> <span class="n">emotionList</span><span class="p">,</span> <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">,</span> <span class="n">inputImagePort</span><span class="p">,</span> <span class="n">outputImagePort</span><span class="p">,</span> <span class="n">outputDataPort</span><span class="p">)</span>
+
+                <span class="c1"># Send output results</span>
+                <span class="n">outputImagePort</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">dataSolvedImage</span><span class="p">)</span>
+
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[ERROR] Sorry, i couldn´t resolve your request.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="YarpDataPort"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.YarpDataPort">[docs]</a><span class="k">class</span> <span class="nc">YarpDataPort</span><span class="p">:</span>
+
+    <span class="c1"># Function: Constructor</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">portName</span><span class="p">):</span>
+
+        <span class="c1"># Build Halo spinner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span> <span class="o">=</span> <span class="n">Halo</span><span class="p">(</span><span class="n">spinner</span><span class="o">=</span><span class="s1">&#39;dots&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Build port and bottle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span> <span class="o">=</span> <span class="n">yarp</span><span class="o">.</span><span class="n">Port</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpBottle</span> <span class="o">=</span> <span class="n">yarp</span><span class="o">.</span><span class="n">Bottle</span><span class="p">()</span>
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Opening Yarp data port &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">portName</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; ...</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;yellow&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="c1"># Open Yarp port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">portName</span> <span class="o">=</span> <span class="n">portName</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">portName</span><span class="p">)</span>
+
+    <span class="c1"># Function: receive</span>
+<div class="viewcode-block" id="YarpDataPort.receive"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.YarpDataPort.receive">[docs]</a>    <span class="k">def</span> <span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yarpBottle</span><span class="p">)</span>
+        <span class="n">dataReceived</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yarpBottle</span><span class="o">.</span><span class="n">toString</span><span class="p">()</span>
+        <span class="n">dataReceived</span> <span class="o">=</span> <span class="n">dataReceived</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[RECEIVED] Data received: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dataReceived</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; at &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span> <span class="o">+</span> <span class="s2">&quot;.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;blue&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dataReceived</span></div>
+
+    <span class="c1"># Function: send</span>
+<div class="viewcode-block" id="YarpDataPort.send"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.YarpDataPort.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataToSend</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpBottle</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpBottle</span><span class="o">.</span><span class="n">addString</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dataToSend</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yarpBottle</span><span class="p">)</span></div>
+
+    <span class="c1"># Function: close</span>
+<div class="viewcode-block" id="YarpDataPort.close"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.YarpDataPort.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">portName</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; port closed correctly.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;yellow&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="YarpImagePort"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.YarpImagePort">[docs]</a><span class="k">class</span> <span class="nc">YarpImagePort</span><span class="p">:</span>
+
+    <span class="c1"># Function: Constructor</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">portName</span><span class="p">,</span> <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">):</span>
+
+        <span class="c1"># Build Halo spinner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span> <span class="o">=</span> <span class="n">Halo</span><span class="p">(</span><span class="n">spinner</span><span class="o">=</span><span class="s1">&#39;dots&#39;</span><span class="p">)</span>
+
+        <span class="c1"># If input image port required</span>
+        <span class="k">if</span> <span class="s2">&quot;/img:i&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">portName</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span> <span class="o">=</span> <span class="n">yarp</span><span class="o">.</span><span class="n">BufferedPortImageRgb</span><span class="p">()</span>
+
+        <span class="c1"># If output image port required</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span> <span class="o">=</span> <span class="n">yarp</span><span class="o">.</span><span class="n">Port</span><span class="p">()</span>
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Opening Yarp image port &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">portName</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; ...</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;yellow&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="c1"># Open Yarp port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">portName</span> <span class="o">=</span> <span class="n">portName</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">portName</span><span class="p">)</span>
+
+        <span class="c1"># Build image buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">imageWidth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">imageWidth</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">imageHeight</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">imageHeight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bufferImage</span> <span class="o">=</span> <span class="n">yarp</span><span class="o">.</span><span class="n">ImageRgb</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bufferImage</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">imageWidth</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">imageHeight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bufferArray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">imageHeight</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">imageWidth</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bufferImage</span><span class="o">.</span><span class="n">setExternal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bufferArray</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufferArray</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufferArray</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Function: receive</span>
+<div class="viewcode-block" id="YarpImagePort.receive"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.YarpImagePort.receive">[docs]</a>    <span class="k">def</span> <span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bufferImage</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufferArray</span><span class="o">.</span><span class="n">__array_interface__</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufferImage</span><span class="o">.</span><span class="n">getRawImage</span><span class="p">()</span><span class="o">.</span><span class="fm">__int__</span><span class="p">()</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufferArray</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufferArray</span></div>
+
+    <span class="c1"># Function: send</span>
+<div class="viewcode-block" id="YarpImagePort.send"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.YarpImagePort.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataToSend</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bufferArray</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">dataToSend</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bufferImage</span><span class="p">)</span></div>
+
+    <span class="c1"># Function: close</span>
+<div class="viewcode-block" id="YarpImagePort.close"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.YarpImagePort.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">systemResponseMessage</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">portName</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; port closed correctly.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">text_color</span> <span class="o">=</span> <span class="s2">&quot;yellow&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">systemResponse</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">systemResponseMessage</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">yarpPort</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+
+
+<span class="c1"># Function: main</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../docs/facialAnalysisLiteDetection2D.html#facialAnalysisLiteDetection2D.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;             Program: Facial Analysis Lite Detection 2D                   &quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                     Author: David Velasco Garcia                         &quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;                             @davidvelascogarcia                          &quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Loading Facial Analysis Lite Detection 2D engine ...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Build facialAnalysisLiteDetection2D object</span>
+    <span class="n">facialAnalysisLiteDetection2D</span> <span class="o">=</span> <span class="n">FacialAnalysisLiteDetection2D</span><span class="p">()</span>
+
+    <span class="c1"># Get system platform</span>
+    <span class="n">systemPlatform</span><span class="p">,</span> <span class="n">systemRelease</span> <span class="o">=</span> <span class="n">facialAnalysisLiteDetection2D</span><span class="o">.</span><span class="n">getSystemPlatform</span><span class="p">()</span>
+
+    <span class="c1"># Get authentication data</span>
+    <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">,</span> <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageLabels</span><span class="p">,</span> <span class="n">emotionModel</span> <span class="o">=</span> <span class="n">facialAnalysisLiteDetection2D</span><span class="o">.</span><span class="n">getAuthenticationData</span><span class="p">()</span>
+
+    <span class="c1"># Load age model</span>
+    <span class="n">ageModel</span><span class="p">,</span> <span class="n">ageList</span> <span class="o">=</span> <span class="n">facialAnalysisLiteDetection2D</span><span class="o">.</span><span class="n">loadAgeModel</span><span class="p">(</span><span class="n">ageModel</span><span class="p">,</span> <span class="n">ageLabels</span><span class="p">)</span>
+
+    <span class="c1"># Load emotion model</span>
+    <span class="n">emotionModel</span><span class="p">,</span> <span class="n">emotionList</span> <span class="o">=</span> <span class="n">facialAnalysisLiteDetection2D</span><span class="o">.</span><span class="n">loadEmotionModel</span><span class="p">(</span><span class="n">emotionModel</span><span class="p">)</span>
+
+    <span class="c1"># Init Yarp network</span>
+    <span class="n">yarp</span><span class="o">.</span><span class="n">Network</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+    <span class="c1"># Create Yarp ports</span>
+    <span class="n">inputImagePort</span> <span class="o">=</span> <span class="n">YarpImagePort</span><span class="p">(</span><span class="s2">&quot;/facialAnalysisLiteDetection2D/img:i&quot;</span><span class="p">,</span> <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">)</span>
+    <span class="n">outputImagePort</span> <span class="o">=</span> <span class="n">YarpImagePort</span><span class="p">(</span><span class="s2">&quot;/facialAnalysisLiteDetection2D/img:o&quot;</span><span class="p">,</span> <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">)</span>
+    <span class="n">outputDataPort</span> <span class="o">=</span> <span class="n">YarpDataPort</span><span class="p">(</span><span class="s2">&quot;/facialAnalysisLiteDetection2D/data:o&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Process input requests</span>
+    <span class="n">facialAnalysisLiteDetection2D</span><span class="o">.</span><span class="n">processRequests</span><span class="p">(</span><span class="n">ageModel</span><span class="p">,</span> <span class="n">ageList</span><span class="p">,</span> <span class="n">emotionModel</span><span class="p">,</span> <span class="n">emotionList</span><span class="p">,</span> <span class="n">imageWidth</span><span class="p">,</span> <span class="n">imageHeight</span><span class="p">,</span> <span class="n">inputImagePort</span><span class="p">,</span> <span class="n">outputImagePort</span><span class="p">,</span> <span class="n">outputDataPort</span><span class="p">)</span>
+
+    <span class="c1"># Close Yarp ports</span>
+    <span class="n">inputImagePort</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">outputImagePort</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">outputDataPort</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Program finished&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;**************************************************************************&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">facialAnalysisLiteDetection2D program finished correctly.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="c1"># Call main function</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, David Velasco Garcia.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

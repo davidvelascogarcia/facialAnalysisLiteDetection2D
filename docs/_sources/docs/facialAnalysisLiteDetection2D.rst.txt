@@ -1,0 +1,7 @@
+facialAnalysisLiteDetection2D module
+====================================
+
+.. automodule:: facialAnalysisLiteDetection2D
+   :members:
+   :undoc-members:
+   :show-inheritance:
