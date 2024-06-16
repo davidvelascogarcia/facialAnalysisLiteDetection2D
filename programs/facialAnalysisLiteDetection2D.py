@@ -1,383 +1,497 @@
 '''
   * ************************************************************
-  *      Program: Facial Analysis Lite Detection 2D Module
+  *      Program: Facial Analysis Lite Detection 2D
   *      Type: Python
   *      Author: David Velasco Garcia @davidvelascogarcia
   * ************************************************************
   *
-  * | INPUT PORT                             | CONTENT                                                 |
-  * |----------------------------------------|---------------------------------------------------------|
-  * | /facialAnalysisLiteDetection2D/img:i   | Input image                                             |
+  * | INPUT PORT                           | CONTENT                                                 |
+  * |--------------------------------------|---------------------------------------------------------|
+  * | /facialAnalysisLiteDetection2D/img:i | Input image                                             |
   *
   *
-  * | OUTPUT PORT                            | CONTENT                                                 |
-  * |----------------------------------------|---------------------------------------------------------|
-  * | /facialAnalysisLiteDetection2D/img:o   | Output image with facial detection analysis             |
-  * | /facialAnalysisLiteDetection2D/data:o  | Output result with facial analysis data                 |
-  *
+  * | OUTPUT PORT                          | CONTENT                                                 |
+  * |--------------------------------------|---------------------------------------------------------|
+  * | /facialAnalysisLiteDetection2D/img:o | Output image with facial analysis                       |
+  * | /facialAnalysisLiteDetection2D/data:o| Output result, facial analysis data                     |
 '''
 
 # Libraries
+import configparser
 import cv2
 import cvlib as cv
 import datetime
-import imutils
-import json
+from halo import Halo
 import numpy as np
-import os
+import platform
+import queue
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten
 from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import MaxPooling2D
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import threading
 import time
 import yarp
 
-print("")
-print("")
-print("**************************************************************************")
-print("**************************************************************************")
-print("               Program: Facial Analysis Lite Detection 2D                 ")
-print("                     Author: David Velasco Garcia                         ")
-print("                             @davidvelascogarcia                          ")
-print("**************************************************************************")
-print("**************************************************************************")
 
-print("")
-print("Starting system ...")
-print("")
+class FacialAnalysisLiteDetection2D:
 
-print("")
-print("Loading facialAnalysisLiteDetection2D module ...")
-print("")
+    # Function: Constructor
+    def __init__(self):
 
-print("")
-print("**************************************************************************")
-print("YARP configuration:")
-print("**************************************************************************")
-print("")
-print("Initializing YARP network ...")
-print("")
+        # Build Halo spinner
+        self.systemResponse = Halo(spinner='dots')
 
-# Init YARP Network
-yarp.Network.init()
+    # Function: getSystemPlatform
+    def getSystemPlatform(self):
 
-print("")
-print("[INFO] Opening image input port with name /facialAnalysisLiteDetection2D/img:i ...")
-print("")
+        # Get system configuration
+        print("\nDetecting system and release version ...\n")
+        systemPlatform = platform.system()
+        systemRelease = platform.release()
 
-# Open input image port
-facialAnalysisLiteDetection2D_portIn = yarp.BufferedPortImageRgb()
-facialAnalysisLiteDetection2D_portNameIn = '/facialAnalysisLiteDetection2D/img:i'
-facialAnalysisLiteDetection2D_portIn.open(facialAnalysisLiteDetection2D_portNameIn)
-
-print("")
-print("[INFO] Opening image output port with name /facialAnalysisLiteDetection2D/img:o ...")
-print("")
-
-# Open output image port
-facialAnalysisLiteDetection2D_portOut = yarp.Port()
-facialAnalysisLiteDetection2D_portNameOut = '/facialAnalysisLiteDetection2D/img:o'
-facialAnalysisLiteDetection2D_portOut.open(facialAnalysisLiteDetection2D_portNameOut)
-
-print("")
-print("[INFO] Opening data output port with name /facialAnalysisLiteDetection2D/data:o ...")
-print("")
-
-# Open output data port
-facialAnalysisLiteDetection2D_portOutDet = yarp.Port()
-facialAnalysisLiteDetection2D_portNameOutDet = '/facialAnalysisLiteDetection2D/data:o'
-facialAnalysisLiteDetection2D_portOutDet.open(facialAnalysisLiteDetection2D_portNameOutDet)
-
-# Create data bootle
-outputBottleFacialAnalysisLiteDetection2D = yarp.Bottle()
-
-# Image size
-image_w = 640
-image_h = 480
-
-# Prepare input image buffer
-in_buf_array = np.ones((image_h, image_w, 3), np.uint8)
-in_buf_image = yarp.ImageRgb()
-in_buf_image.resize(image_w, image_h)
-in_buf_image.setExternal(in_buf_array.data, in_buf_array.shape[1], in_buf_array.shape[0])
-
-# Prepare output image buffer
-out_buf_image = yarp.ImageRgb()
-out_buf_image.resize(image_w, image_h)
-out_buf_array = np.zeros((image_h, image_w, 3), np.uint8)
-out_buf_image.setExternal(out_buf_array.data, out_buf_array.shape[1], out_buf_array.shape[0])
-
-print("")
-print("[INFO] YARP network configured correctly.")
-print("")
-
-print("")
-print("**************************************************************************")
-print("Loading models:")
-print("**************************************************************************")
-print("")
-print("[INFO] Loading models at " + str(datetime.datetime.now()) + " ...")
-print("")
-
-# Load models
-# Age Models
-print("")
-print("[INFO] Loading age models at " + str(datetime.datetime.now()) + " ...")
-print("")
-
-ageModel = cv2.dnn.readNetFromCaffe('./../models/ageDeployModel.prototxt','./../models/ageNetModel.caffemodel')
-
-print("")
-print("Configuring age model parameters ...")
-print("")
-
-# Age model dictionary
-ageList = ['(0, 2)', '(4, 6)', '(8, 12)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
-
-print("")
-print("[INFO] Age model loaded correctly.")
-print("")
-
-# Emotion Models
-print("")
-print("[INFO] Loading emotion models at " + str(datetime.datetime.now()) + " ...")
-print("")
-
-# Initializing emotionModel
-emotionModel = Sequential()
-
-print("")
-print("Configuring emotion model parameters ...")
-print("")
-
-# Emotion model dictionary
-emotionDictionary = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
-
-emotionModel.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(48,48,1)))
-emotionModel.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
-emotionModel.add(MaxPooling2D(pool_size=(2, 2)))
-emotionModel.add(Dropout(0.25))
-emotionModel.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
-emotionModel.add(MaxPooling2D(pool_size=(2, 2)))
-emotionModel.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
-emotionModel.add(MaxPooling2D(pool_size=(2, 2)))
-emotionModel.add(Dropout(0.25))
-emotionModel.add(Flatten())
-emotionModel.add(Dense(1024, activation='relu'))
-emotionModel.add(Dropout(0.5))
-emotionModel.add(Dense(7, activation='softmax'))
-
-emotionModel.load_weights('./../models/emotionModel.h5')
-
-print("")
-print("[INFO] Emotion model loaded correctly.")
-print("")
-
-print("")
-print("[INFO] Models loaded correctly.")
-print("")
-
-# Control loop
-loopControlReadImage = 0
-
-while int(loopControlReadImage) == 0:
-
-    try:
-
-        print("")
         print("**************************************************************************")
-        print("Waiting for input image source:")
+        print("Configuration detected:")
         print("**************************************************************************")
-        print("")
-        print("[INFO] Waiting input image source at " + str(datetime.datetime.now()) + " ...")
-        print("")
+        print("\nPlatform:")
+        print(systemPlatform)
+        print("Release:")
+        print(systemRelease)
 
-        # Receive image source
-        frame = facialAnalysisLiteDetection2D_portIn.read()
+        return systemPlatform, systemRelease
 
-        print("")
-        print("**************************************************************************")
-        print("Processing input image data:")
-        print("**************************************************************************")
-        print("")
-        print("[INFO] Processing input image data at " + str(datetime.datetime.now()) + " ...")
-        print("")
+    # Function: getAuthenticationData
+    def getAuthenticationData(self):
 
-        # Buffer processed image
-        in_buf_image.copy(frame)
-        assert in_buf_array.__array_interface__['data'][0] == in_buf_image.getRawImage().__int__()
+        print("\n**************************************************************************")
+        print("Authentication:")
+        print("**************************************************************************\n")
 
-        # YARP -> OpenCV
-        rgbFrame = in_buf_array[:, :, ::-1]
+        loopControlFileExists = 0
 
-        # rgbFrame to gray
-        grayFrame = cv2.cvtColor(rgbFrame, cv2.COLOR_BGR2GRAY)
+        while int(loopControlFileExists) == 0:
+            try:
+                # Get authentication data
+                print("\nGetting authentication data ...\n")
 
-        print("")
-        print("**************************************************************************")
-        print("Analyzing image source:")
-        print("**************************************************************************")
-        print("")
-        print("[INFO] Analyzing image source at " + str(datetime.datetime.now()) + " ...")
-        print("")
+                authenticationData = configparser.ConfigParser()
+                authenticationData.read('../config/config.ini')
+                authenticationData.sections()
 
-        # cvlib detect and extract faces
-        detectedFaces, detectedFacesConfidence = cv.detect_face(rgbFrame)
+                imageWidth = authenticationData['Configuration']['image-width']
+                imageHeight = authenticationData['Configuration']['image-height']
 
-        # Configure padding
+                ageModel = "./../models/" + authenticationData['Models']['age-model']
+                ageLabels = "./../models/" + authenticationData['Models']['age-labels']
+                emotionModel = "./../models/" + authenticationData['Models']['emotion-model']
+
+                print("Image width: " + str(imageWidth))
+                print("Image height: " + str(imageHeight))
+
+                print("Age model: " + str(ageModel))
+                print("Age labels: " + str(ageLabels))
+                print("Emotion model: " + str(emotionModel))
+
+                # Exit loop
+                loopControlFileExists = 1
+
+            except:
+
+                systemResponseMessage = "\n[ERROR] Sorry, config.ini not founded, waiting 4 seconds to the next check ...\n"
+                self.systemResponse.text_color = "red"
+                self.systemResponse.fail(systemResponseMessage)
+                time.sleep(4)
+
+        systemResponseMessage = "\n[INFO] Data obtained correctly.\n"
+        self.systemResponse.text_color = "green"
+        self.systemResponse.succeed(systemResponseMessage)
+
+        return imageWidth, imageHeight, ageModel, ageLabels, emotionModel
+
+    # Function: loadAgeModel
+    def loadAgeModel(self, ageModel, ageLabels):
+
+        # Load trained age model with their labels
+        ageModel = cv2.dnn.readNetFromCaffe(str(ageLabels), str(ageModel))
+
+        # Prepare age list dictionary
+        ageList = ['(0, 2)', '(4, 6)', '(8, 12)', '(15, 20)', '(25, 32)', '(38, 43)', '(48, 53)', '(60, 100)']
+
+
+        systemResponseMessage = "\n[INFO] Age model loaded correctly correctly.\n"
+        self.systemResponse.text_color = "green"
+        self.systemResponse.succeed(systemResponseMessage)
+
+        return ageModel, ageList
+
+    # Function: loadEmotionModel
+    def loadEmotionModel(self, emotionModelPath):
+
+        # Build neural network
+        emotionModel = Sequential()
+
+        # Configure neural network
+        emotionModel.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(48, 48, 1)))
+        emotionModel.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+        emotionModel.add(MaxPooling2D(pool_size=(2, 2)))
+        emotionModel.add(Dropout(0.25))
+        emotionModel.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+        emotionModel.add(MaxPooling2D(pool_size=(2, 2)))
+        emotionModel.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
+        emotionModel.add(MaxPooling2D(pool_size=(2, 2)))
+        emotionModel.add(Dropout(0.25))
+        emotionModel.add(Flatten())
+        emotionModel.add(Dense(1024, activation='relu'))
+        emotionModel.add(Dropout(0.5))
+        emotionModel.add(Dense(7, activation='softmax'))
+
+        # Load trained network and set the trained weights in configured neural network
+        emotionModel.load_weights(str(emotionModelPath))
+
+        # Prepare emotion list dictionary
+        emotionList = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
+
+        systemResponseMessage = "\n[INFO] Emotion model loaded correctly correctly.\n"
+        self.systemResponse.text_color = "green"
+        self.systemResponse.succeed(systemResponseMessage)
+
+        return emotionModel, emotionList
+
+    # Function: genderAnalysis
+    def genderAnalysis(self, userFace, xMin, yMin, xMax, yMax, genderQueueBuffer):
+
+        # Analyze user gender
+        (userGender, genderConfidence) = cv.detect_gender(userFace)
+
+        # Get index confidence
+        genderConfidenceIndex = np.argmax(genderConfidence)
+
+        # Get prediction based on confidence of gender
+        dataSolved = str(userGender[genderConfidenceIndex])
+
+        # Prepare data solved with prediction and de confidence
+        dataSolved = str(dataSolved) + " " + str(int(genderConfidence[genderConfidenceIndex] * 100)) + "%"
+
+        genderQueueBuffer.put(dataSolved)
+
+    # Function: ageAnalysis
+    def ageAnalysis(self, userFace, xMin, yMin, xMax, yMax, ageModel, ageList, ageQueueBuffer):
+
+        # Configure model values
+        MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
+
+        # Extract blob from image
+        blobImage = cv2.dnn.blobFromImage(userFace, 1, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
+
+        # Analyze user age
+        ageModel.setInput(blobImage)
+
+        # Get user age
+        userAge = ageModel.forward()
+
+        # Get ageDetection compare with ageList and index
+        userAge = ageList[userAge[0].argmax()]
+
+        # Prepare data solved with prediction
+        dataSolved = str(userAge)
+
+        ageQueueBuffer.put(dataSolved)
+
+    # Function: emotionAnalysis
+    def emotionAnalysis(self, userFace, xMin, yMin, xMax, yMax, emotionModel, emotionList, emotionQueueBuffer):
+
+        # BGR to grey scale conversion
+        userFace = cv2.cvtColor(userFace, cv2.COLOR_BGR2GRAY)
+
+        # Resize user face to emotion model size
+        userFace = np.expand_dims(np.expand_dims(cv2.resize(userFace, (48, 48)), -1), 0)
+
+        # Analyze user emotion
+        userEmotion = emotionModel.predict(userFace)
+
+        # Get emotion detection compare with emotionDictionary
+        userEmotion = int(np.argmax(userEmotion))
+        userEmotion = emotionList[userEmotion]
+
+        # Prepare data solved with prediction
+        dataSolved = str(userEmotion)
+
+        emotionQueueBuffer.put(dataSolved)
+
+    # Function: analyzeImage
+    def analyzeImage(self, dataToSolve, ageModel, ageList, emotionModel, emotionList, imageWidth, imageHeight, inputImagePort, outputImagePort, outputDataPort):
+
+        # Detect users in data to solve
+        detectedUsers, detectionConfidence = cv.detect_face(dataToSolve)
+
+        # Prepare default padding value
         padding = 20
 
-        # Pre-configure values with "None"
-        genderDetection = "None"
-        ageDetection = "None"
-        emotionDetection = "None"
+        # If a face is detected
+        if str(detectedUsers) != "[]":
 
-        if str(detectedFaces) != "[]":
+            # For each detected user
+            for idx, f in enumerate(detectedUsers):
 
-            # Analyzing detected faces
-            for idx, f in enumerate(detectedFaces):
+                # Get user rectangle coordinates
+                (xMin,yMin) = max(0, f[0] - padding), max(0, f[1] - padding)
+                (xMax,yMax) = min(dataToSolve.shape[1] - 1, f[2] + padding), min(dataToSolve.shape[0]-1, f[3] + padding)
 
-                # Get rectangle coordinates init XY coordinates and last XY coordinates
-                (initX,initY) = max(0, f[0] - padding), max(0, f[1] - padding)
-                (lastX,lastY) = min(rgbFrame.shape[1] - 1, f[2] + padding), min(rgbFrame.shape[0]-1, f[3] + padding)
+                # Draw red rectangle in user detected
+                cv2.rectangle(dataToSolve, (xMin, yMin), (xMax, yMax), (255, 0, 0), 2)
 
-                # Print red rectangle in detected faces
-                cv2.rectangle(in_buf_array, (initX,initY), (lastX,lastY), (255,0,0), 2)
+                # Extract only user detected face
+                userFace = np.copy(dataToSolve[yMin:yMax, xMin:xMax])
 
+                # Build Queue buffers
+                genderQueueBuffer = queue.Queue()
+                ageQueueBuffer = queue.Queue()
+                emotionQueueBuffer = queue.Queue()
 
-                # Gender analysis
-                # Extract detected faces
-                extractedGenderFace = np.copy(rgbFrame[initY:lastY, initX:lastX])
+                # Build three threads to improve analysis speed
+                genderAnalysisThread = threading.Thread(target=self.genderAnalysis, args=(userFace, xMin, yMin, xMax, yMax, genderQueueBuffer))
+                ageAnalysisThread = threading.Thread(target=self.ageAnalysis, args=(userFace, xMin, yMin, xMax, yMax, ageModel, ageList, ageQueueBuffer))
+                emotionAnalysisThread = threading.Thread(target=self.emotionAnalysis, args=(userFace, xMin, yMin, xMax, yMax, emotionModel, emotionList, emotionQueueBuffer))
 
-                # Detect gender
-                (genderDetectionResult, genderDetectionConfidence) = cv.detect_gender(extractedGenderFace)
+                # Start three threads
+                genderAnalysisThread.start()
+                ageAnalysisThread.start()
+                emotionAnalysisThread.start()
 
-                # Prepare label and confidence value
-                idx = np.argmax(genderDetectionConfidence)
-                genderDetectionLabel = genderDetectionResult[idx]
-                genderDetectionLabel = str(genderDetectionLabel) + " " + str(int(genderDetectionConfidence[idx] * 100)) + "%"
+                # Wait until three threads ends
+                genderAnalysisThread.join()
+                ageAnalysisThread.join()
+                emotionAnalysisThread.join()
 
-                # Get detected gender value to send
-                genderDetection = genderDetectionLabel
+                # Get threads results
+                userGender = genderQueueBuffer.get()
+                userAge = ageQueueBuffer.get()
+                userEmotion = emotionQueueBuffer.get()
 
-                # Update full detection label
-                detectionFrameLabel = "G: " + str(genderDetection)
+                # Prepare data solved results
+                dataSolvedResults = "Gender: " + str(userGender) + ", Age: " + str(userAge) + ", Emotion: " + str(userEmotion) + ", Date: " + str(datetime.datetime.now())
+                dataSolvedResultsLabel = "G: " + str(userGender) + ", A: " + str(userAge) + ", E: " + str(userEmotion) + ", D: " + str(datetime.datetime.now())
 
-                # Age detection
-                # Extract detected faces
-                extractedAgeFace = rgbFrame[initY:lastY, initX:lastX].copy()
+                # Draw data solved results on user detected
+                cv2.putText(dataToSolve, dataSolvedResultsLabel, (xMin, yMin - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2, cv2.LINE_AA)
 
-                # Configure model MODEL_MEAN_VALUES
-                MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
+                # Send detected results
+                outputDataPort.send(dataSolvedResults)
 
-                # Detect age
-                blobFromImageObject = cv2.dnn.blobFromImage(extractedAgeFace, 1, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
-                ageModel.setInput(blobFromImageObject)
-                ageDetected = ageModel.forward()
-
-                # Get ageDetection compare with ageList
-                ageDetection = ageList[ageDetected[0].argmax()]
-                ageDetection = str(ageDetection)
-
-                # Update full detection label
-                detectionFrameLabel = detectionFrameLabel + " A: " + ageDetection
-
-                # Emotion detection
-                # Extract detected faces from grayFrame
-                extractedEmotionFace = grayFrame[initY:lastY, initX:lastX]
-
-                # Resize grayFrame
-                croppedGrayFrame = np.expand_dims(np.expand_dims(cv2.resize(extractedEmotionFace, (48, 48)), -1), 0)
-
-                # Detect emotion
-                emotionPredictionDetection = emotionModel.predict(croppedGrayFrame)
-
-                # Get emotion detection compare with emotionDictionary
-                emotionPredictionDetectionIndex = int(np.argmax(emotionPredictionDetection))
-                emotionDetection = emotionDictionary[emotionPredictionDetectionIndex]
-
-                # Update full detection label
-                detectionFrameLabel = detectionFrameLabel + " E: " + str(emotionDictionary[emotionPredictionDetectionIndex])
-
-
-                # Print detection parameters in face detected in red color
-                cv2.putText(in_buf_array, detectionFrameLabel, (initX, initY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2, cv2.LINE_AA)
-
-                # Print processed data
-                print("")
-                print("**************************************************************************")
-                print("Resume results:")
-                print("**************************************************************************")
-                print("")
-                print("[RESULTS] Facial analysis results:")
-                print("")
-                print("[GENDER] Gender: " + str(genderDetection))
-                print("[AGE] Age: " + str(ageDetection))
-                print("[EMOTION] Emotion: "  + str(emotionDetection))
-                print("[DATE] Detection time: " + str(datetime.datetime.now()))
-                print("")
-
-                # Sending processed detection
-                outputBottleFacialAnalysisLiteDetection2D.clear()
-                outputBottleFacialAnalysisLiteDetection2D.addString("GENDER:")
-                outputBottleFacialAnalysisLiteDetection2D.addString(str(genderDetection))
-                outputBottleFacialAnalysisLiteDetection2D.addString("AGE:")
-                outputBottleFacialAnalysisLiteDetection2D.addString(str(ageDetection))
-                outputBottleFacialAnalysisLiteDetection2D.addString("EMOTION:")
-                outputBottleFacialAnalysisLiteDetection2D.addString(str(emotionDetection))
-                outputBottleFacialAnalysisLiteDetection2D.addString("DATE:")
-                outputBottleFacialAnalysisLiteDetection2D.addString(str(datetime.datetime.now()))
-                facialAnalysisLiteDetection2D_portOutDet.write(outputBottleFacialAnalysisLiteDetection2D)
-
-        # If no faces detected publish "None results"
         else:
+            systemResponseMessage = "\n[INFO] No faces detected.\n"
+            self.systemResponse.text_color = "blue"
+            self.systemResponse.info(systemResponseMessage)
 
-            print("")
-            print("[INFO] No faces detected.")
-            print("")
+            # Prepare output results
+            dataSolvedResults = "Gender: None, Age: None, Emotion: None, Date: " + str(datetime.datetime.now())
 
-            # Sending processed detection
-            outputBottleFacialAnalysisLiteDetection2D.clear()
-            outputBottleFacialAnalysisLiteDetection2D.addString("GENDER:")
-            outputBottleFacialAnalysisLiteDetection2D.addString(str(genderDetection))
-            outputBottleFacialAnalysisLiteDetection2D.addString("AGE:")
-            outputBottleFacialAnalysisLiteDetection2D.addString(str(ageDetection))
-            outputBottleFacialAnalysisLiteDetection2D.addString("EMOTION:")
-            outputBottleFacialAnalysisLiteDetection2D.addString(str(emotionDetection))
-            outputBottleFacialAnalysisLiteDetection2D.addString("DATE:")
-            outputBottleFacialAnalysisLiteDetection2D.addString(str(datetime.datetime.now()))
-            facialAnalysisLiteDetection2D_portOutDet.write(outputBottleFacialAnalysisLiteDetection2D)
+            # Send detected results
+            outputDataPort.send(dataSolvedResults)
 
-        print("")
-        print("[INFO] Image source analysis done correctly.")
-        print("")
+        systemResponseMessage = "\n" + str(dataSolvedResults) + "\n"
+        self.systemResponse.text_color = "green"
+        self.systemResponse.succeed(systemResponseMessage)
 
-        # Sending processed image
-        print("")
-        print("[INFO] Sending processed image at " + str(datetime.datetime.now()) + " ...")
-        print("")
+        dataSolvedImage = dataToSolve
 
-        out_buf_array[:,:] = in_buf_array
-        facialAnalysisLiteDetection2D_portOut.write(out_buf_image)
+        return dataSolvedImage
 
-    except:
-        print("")
-        print("[ERROR] Empty frame.")
-        print("")
+    # Function: processRequest
+    def processRequests(self, ageModel, ageList, emotionModel, emotionList, imageWidth, imageHeight, inputImagePort, outputImagePort, outputDataPort):
 
-# Close ports
-print("[INFO] Closing ports ...")
-facialAnalysisLiteDetection2D_portIn.close()
-facialAnalysisLiteDetection2D_portOut.close()
-facialAnalysisLiteDetection2D_portOutDet.close()
+        # Variable to control loopProcessRequests
+        loopProcessRequests = 0
 
-print("")
-print("")
-print("**************************************************************************")
-print("Program finished")
-print("**************************************************************************")
-print("")
-print("facialAnalysisLiteDetection2D program closed correctly.")
-print("")
+        while int(loopProcessRequests) == 0:
+
+            # Waiting to input data request
+            print("**************************************************************************")
+            print("Waiting for input data request:")
+            print("**************************************************************************")
+
+            systemResponseMessage = "\n[INFO] Waiting for input data request at " + str(datetime.datetime.now()) + " ...\n"
+            self.systemResponse.text_color = "yellow"
+            self.systemResponse.warn(systemResponseMessage)
+
+            # Receive input request
+            dataToSolve = inputImagePort.receive()
+
+            print("\n**************************************************************************")
+            print("Processing:")
+            print("**************************************************************************\n")
+
+            try:
+                dataSolvedImage = self.analyzeImage(dataToSolve, ageModel, ageList, emotionModel, emotionList, imageWidth, imageHeight, inputImagePort, outputImagePort, outputDataPort)
+
+                # Send output results
+                outputImagePort.send(dataSolvedImage)
+
+            except:
+                systemResponseMessage = "\n[ERROR] Sorry, i couldn´t resolve your request.\n"
+                self.systemResponse.text_color = "red"
+                self.systemResponse.fail(systemResponseMessage)
+
+
+class YarpDataPort:
+
+    # Function: Constructor
+    def __init__(self, portName):
+
+        # Build Halo spinner
+        self.systemResponse = Halo(spinner='dots')
+
+        # Build port and bottle
+        self.yarpPort = yarp.Port()
+        self.yarpBottle = yarp.Bottle()
+
+        systemResponseMessage = "\n[INFO] Opening Yarp data port " + str(portName) + " ...\n"
+        self.systemResponse.text_color = "yellow"
+        self.systemResponse.warn(systemResponseMessage)
+
+        # Open Yarp port
+        self.portName = portName
+        self.yarpPort.open(self.portName)
+
+    # Function: receive
+    def receive(self):
+
+        self.yarpPort.read(self.yarpBottle)
+        dataReceived = self.yarpBottle.toString()
+        dataReceived = dataReceived.replace('"', '')
+
+        systemResponseMessage = "\n[RECEIVED] Data received: " + str(dataReceived) + " at " + str(datetime.datetime.now()) + ".\n"
+        self.systemResponse.text_color = "blue"
+        self.systemResponse.info(systemResponseMessage)
+
+        return dataReceived
+
+    # Function: send
+    def send(self, dataToSend):
+
+        self.yarpBottle.clear()
+        self.yarpBottle.addString(str(dataToSend))
+        self.yarpPort.write(self.yarpBottle)
+
+    # Function: close
+    def close(self):
+
+        systemResponseMessage = "\n[INFO] " + str(self.portName) + " port closed correctly.\n"
+        self.systemResponse.text_color = "yellow"
+        self.systemResponse.warn(systemResponseMessage)
+
+        self.yarpPort.close()
+
+
+class YarpImagePort:
+
+    # Function: Constructor
+    def __init__(self, portName, imageWidth, imageHeight):
+
+        # Build Halo spinner
+        self.systemResponse = Halo(spinner='dots')
+
+        # If input image port required
+        if "/img:i" in str(portName):
+            self.yarpPort = yarp.BufferedPortImageRgb()
+
+        # If output image port required
+        else:
+            self.yarpPort = yarp.Port()
+
+        systemResponseMessage = "\n[INFO] Opening Yarp image port " + str(portName) + " ...\n"
+        self.systemResponse.text_color = "yellow"
+        self.systemResponse.warn(systemResponseMessage)
+
+        # Open Yarp port
+        self.portName = portName
+        self.yarpPort.open(self.portName)
+
+        # Build image buffer
+        self.imageWidth = int(imageWidth)
+        self.imageHeight = int(imageHeight)
+        self.bufferImage = yarp.ImageRgb()
+        self.bufferImage.resize(self.imageWidth, self.imageHeight)
+        self.bufferArray = np.ones((self.imageHeight, self.imageWidth, 3), np.uint8)
+        self.bufferImage.setExternal(self.bufferArray.data, self.bufferArray.shape[1], self.bufferArray.shape[0])
+
+    # Function: receive
+    def receive(self):
+
+        image = self.yarpPort.read()
+        self.bufferImage.copy(image)
+        assert self.bufferArray.__array_interface__['data'][0] == self.bufferImage.getRawImage().__int__()
+        image = self.bufferArray[:, :, ::-1]
+
+        return self.bufferArray
+
+    # Function: send
+    def send(self, dataToSend):
+
+        self.bufferArray[:,:] = dataToSend
+        self.yarpPort.write(self.bufferImage)
+
+    # Function: close
+    def close(self):
+
+        systemResponseMessage = "\n[INFO] " + str(self.portName) + " port closed correctly.\n"
+        self.systemResponse.text_color = "yellow"
+        self.systemResponse.warn(systemResponseMessage)
+
+        self.yarpPort.close()
+
+
+# Function: main
+def main():
+
+    print("**************************************************************************")
+    print("**************************************************************************")
+    print("             Program: Facial Analysis Lite Detection 2D                   ")
+    print("                     Author: David Velasco Garcia                         ")
+    print("                             @davidvelascogarcia                          ")
+    print("**************************************************************************")
+    print("**************************************************************************")
+
+    print("\nLoading Facial Analysis Lite Detection 2D engine ...\n")
+
+    # Build facialAnalysisLiteDetection2D object
+    facialAnalysisLiteDetection2D = FacialAnalysisLiteDetection2D()
+
+    # Get system platform
+    systemPlatform, systemRelease = facialAnalysisLiteDetection2D.getSystemPlatform()
+
+    # Get authentication data
+    imageWidth, imageHeight, ageModel, ageLabels, emotionModel = facialAnalysisLiteDetection2D.getAuthenticationData()
+
+    # Load age model
+    ageModel, ageList = facialAnalysisLiteDetection2D.loadAgeModel(ageModel, ageLabels)
+
+    # Load emotion model
+    emotionModel, emotionList = facialAnalysisLiteDetection2D.loadEmotionModel(emotionModel)
+
+    # Init Yarp network
+    yarp.Network.init()
+
+    # Create Yarp ports
+    inputImagePort = YarpImagePort("/facialAnalysisLiteDetection2D/img:i", imageWidth, imageHeight)
+    outputImagePort = YarpImagePort("/facialAnalysisLiteDetection2D/img:o", imageWidth, imageHeight)
+    outputDataPort = YarpDataPort("/facialAnalysisLiteDetection2D/data:o")
+
+    # Process input requests
+    facialAnalysisLiteDetection2D.processRequests(ageModel, ageList, emotionModel, emotionList, imageWidth, imageHeight, inputImagePort, outputImagePort, outputDataPort)
+
+    # Close Yarp ports
+    inputImagePort.close()
+    outputImagePort.close()
+    outputDataPort.close()
+
+    print("**************************************************************************")
+    print("Program finished")
+    print("**************************************************************************")
+    print("\nfacialAnalysisLiteDetection2D program finished correctly.\n")
+
+
+if __name__ == "__main__":
+
+    # Call main function
+    main()
