@@ -11,14 +11,14 @@ compiler:
 
 before_install:
   - sudo apt-get -qq update
-  
-   # Upgrade pip
-  - python -m pip install --upgrade pip
 
 # Configure git
   - if [ ! `git config --get user.email` ]; then `git config --global user.email 'user@example.com'`; fi
   - if [ ! `git config --get user.name` ]; then `git config --global user.name 'Travis CI'`; fi
 
+ # Upgrade pip
+  - python -m pip install --upgrade pip
+  
 install:
 # Install YARP
   - sudo sh -c 'echo "deb http://www.icub.org/ubuntu xenial contrib/science" > /etc/apt/sources.list.d/icub.list'
@@ -28,7 +28,7 @@ install:
 
 # Install dependencies
   - pip install -r requirements.txt
-  
+
 before_script:
   - cd programs
 
